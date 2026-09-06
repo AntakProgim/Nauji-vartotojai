@@ -1,0 +1,6 @@
+{
+  "name": "Google Workspace Vartotojų Kūrimas",
+  "description": "Įrankis skirtas generuoti Google Admin CSV failą masiniam vartotojų kūrimui iš pateikto Excel ar tekstinio sąrašo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
