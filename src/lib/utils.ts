@@ -63,21 +63,25 @@ function escapeCsvCell(cell: string): string {
   return cell;
 }
 
-export function generateCsv(users: UserRecord[], password: string, requireChange: boolean): string {
-  const headers = [
-    "First Name [Required]", "Last Name [Required]", "Email Address [Required]", 
-    "Password [Required]", "Password Hash Function [UPLOAD ONLY]", "Org Unit Path [Required]", 
-    "New Primary Email [UPLOAD ONLY]", "Recovery Email", "Home Secondary Email", 
-    "Work Secondary Email", "Recovery Phone [MUST BE IN THE E.164 FORMAT]", 
-    "Work Phone", "Home Phone", "Mobile Phone", "Work Address", "Home Address", 
-    "Employee ID", "Employee Type", "Employee Title", "Manager Email", "Department", 
-    "Cost Center", "Building ID", "Floor Name", "Floor Section", 
-    "Change Password at Next Sign-In", "New Status [UPLOAD ONLY]", 
-    "New Licenses [UPLOAD ONLY]", "Advanced Protection Program enrollment"
-  ];
+export const CSV_HEADERS = [
+  "First Name [Required]", "Last Name [Required]", "Email Address [Required]", 
+  "Password [Required]", "Password Hash Function [UPLOAD ONLY]", "Org Unit Path [Required]", 
+  "New Primary Email [UPLOAD ONLY]", "Recovery Email", "Home Secondary Email", 
+  "Work Secondary Email", "Recovery Phone [MUST BE IN THE E.164 FORMAT]", 
+  "Work Phone", "Home Phone", "Mobile Phone", "Work Address", "Home Address", 
+  "Employee ID", "Employee Type", "Employee Title", "Manager Email", "Department", 
+  "Cost Center", "Building ID", "Floor Name", "Floor Section", 
+  "Change Password at Next Sign-In", "New Status [UPLOAD ONLY]", 
+  "New Licenses [UPLOAD ONLY]", "Advanced Protection Program enrollment"
+];
 
+export function generateEmptyTemplate(): string {
+  return "\uFEFF" + CSV_HEADERS.join(",");
+}
+
+export function generateCsv(users: UserRecord[], password: string, requireChange: boolean): string {
   const rows = users.map(u => {
-    const row = new Array(headers.length).fill("");
+    const row = new Array(CSV_HEADERS.length).fill("");
     row[0] = u.firstName;
     row[1] = u.lastName;
     row[2] = u.email;
@@ -89,5 +93,5 @@ export function generateCsv(users: UserRecord[], password: string, requireChange
     return row.map(escapeCsvCell).join(",");
   });
 
-  return "\uFEFF" + [headers.join(","), ...rows].join("\n");
+  return "\uFEFF" + [CSV_HEADERS.join(","), ...rows].join("\n");
 }

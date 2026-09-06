@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Download, Users, Settings, FileSpreadsheet, Plus, Trash2 } from 'lucide-react';
+import { Download, Users, Settings, FileSpreadsheet, Plus, Trash2, FileOutput } from 'lucide-react';
 import { UserRecord } from './types';
-import { ORG_UNITS, generateCsv, generateEmail } from './lib/utils';
+import { ORG_UNITS, generateCsv, generateEmail, generateEmptyTemplate } from './lib/utils';
 
 export default function App() {
   const [users, setUsers] = useState<UserRecord[]>([]);
@@ -85,6 +85,18 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  const downloadTemplate = () => {
+    const csvStr = generateEmptyTemplate();
+    const blob = new Blob([csvStr], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'users_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="h-screen w-full flex flex-col font-sans text-gray-800 bg-gray-50 overflow-hidden">
       <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0">
@@ -96,6 +108,14 @@ export default function App() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={downloadTemplate}
+            className="text-gray-500 hover:text-indigo-600 px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2 border border-gray-200 hover:border-indigo-200 bg-gray-50 hover:bg-indigo-50"
+            title="Atsisiųsti tuščią CSV šabloną"
+          >
+            <FileOutput className="w-4 h-4" />
+            <span className="hidden sm:inline">Tuščias šablonas</span>
+          </button>
           <div className="flex flex-col items-end">
             <span className="text-xs font-semibold text-gray-400">STATUSAS</span>
             <span className="text-xs font-medium text-green-600 flex items-center gap-1">
