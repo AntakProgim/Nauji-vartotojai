@@ -391,7 +391,7 @@ export default function App() {
           <div className="mt-auto p-3 bg-indigo-50/80 rounded-xl border border-indigo-100 shrink-0">
             <p className="text-xs leading-relaxed text-indigo-900">
               <strong className="block mb-0.5 text-indigo-950 font-semibold">Taisyklės:</strong> 
-              Vardai el. paštui automatiškai verčiami į lotyniškus simbolius (pvz. <em>ą -&gt; a, š -&gt; s</em>). Jei mokinys turi kelis vardus, el. paštui imamas tik pirmasis.
+              Lietuviškos raidės verčiamos į lotyniškas (<em>ą→a, š→s</em>). Jei yra keli vardai – el. paštui naudojamas <strong>pirmas</strong>, o jei kelios / dvigubos pavardės – naudojama <strong>antroji pavardė</strong>.
             </p>
           </div>
         </aside>

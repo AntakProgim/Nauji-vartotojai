@@ -50,8 +50,15 @@ export function transliterate(str: string): string {
 
 export function generateEmail(firstName: string, lastName: string): string {
   if (!firstName && !lastName) return "";
-  const first = firstName.split(' ')[0].trim();
-  const last = lastName.replace(/\s+/g, '').trim();
+  
+  // Jei yra keli vardai, el. paštui naudoti pirmąjį
+  const firstParts = firstName.trim().split(/[\s]+/).filter(Boolean);
+  const first = firstParts[0] || "";
+
+  // Jei yra dvi pavardės (pvz. su brūkšneliu "Macevičiūtė-Bartkutė" ar tarpu), naudoti antrąją
+  const lastParts = lastName.trim().split(/[- \t]+/).filter(Boolean);
+  const last = lastParts.length > 1 ? lastParts[lastParts.length - 1] : (lastParts[0] || "");
+
   return `${transliterate(first)}.${transliterate(last)}@antakalnio.lt`;
 }
 
