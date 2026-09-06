@@ -1,4 +1,4 @@
-import { UserRecord } from "../types";
+import { UserRecord, HistoryBatch } from "../types";
 
 export const ORG_UNITS = [
   "/VAP",
@@ -94,4 +94,138 @@ export function generateCsv(users: UserRecord[], password: string, requireChange
   });
 
   return "\uFEFF" + [CSV_HEADERS.join(","), ...rows].join("\n");
+}
+
+const STORAGE_KEY = "antakalnio_creation_history_v1";
+
+export function getHistory(): HistoryBatch[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) return [];
+    return JSON.parse(stored);
+  } catch {
+    return [];
+  }
+}
+
+export function saveBatchToHistory(batch: Omit<HistoryBatch, "id" | "createdAt">): HistoryBatch {
+  const newBatch: HistoryBatch = {
+    ...batch,
+    id: crypto.randomUUID(),
+    createdAt: new Date().toLocaleString("lt-LT", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+
+  const existing = getHistory();
+  const updated = [newBatch, ...existing.slice(0, 49)]; // keep up to 50 batches
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error("Failed to save history", err);
+  }
+  return newBatch;
+}
+
+export function deleteBatchFromHistory(id: string): HistoryBatch[] {
+  const existing = getHistory();
+  const updated = existing.filter((item) => item.id !== id);
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error("Failed to update history", err);
+  }
+  return updated;
+}
+
+export function clearAllHistory(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (err) {
+    console.error("Failed to clear history", err);
+  }
+}
+
+export function generateNotificationEmail(
+  users: UserRecord[],
+  password: string,
+  extraNotes?: string
+): { subject: string; bodyText: string; bodyHtml: string } {
+  const count = users.length;
+  const sampleOU = users.length > 0 ? users[0].orgUnit : "";
+  const ouClean = sampleOU.replace(/^\//, "").replace(/\//g, " > ");
+  
+  const subject = `Informacija apie sukurtus naujus el. paštus (${count} vartotojai${ouClean ? ` - ${ouClean}` : ""}) - Antakalnio progimnazija`;
+
+  const usersListText = users
+    .map((u, i) => `${i + 1}. ${u.firstName} ${u.lastName} | El. paštas: ${u.email} | Laikinas slaptažodis: ${password} | Padalinys: ${u.orgUnit}`)
+    .join("\n");
+
+  const bodyText = `Sveiki,
+
+Informuojame, kad yra sukurti el. paštai.  
+Slaptažodžius būtina pasikeisti ir kur nors vaikams bei jų tėvams užsirašyti.
+Atnaujinta klasės el. pašto grupė.
+
+${extraNotes ? `Papildoma informacija: ${extraNotes}\n\n` : ""}Naujai sukurtų vartotojų sąrašas (${count}):
+${usersListText}
+
+Svarbios nuorodos ir instrukcijos:
+• Nuotolinio ugdymo svetainė - https://sites.google.com/antakalnio.lt/nuotolinis/pagalba#h.wqc5u5hdrupj
+• El. pašto prisijungimo instrukcija - https://sites.google.com/antakalnio.lt/nuotolinis/ugdymo-it-%C4%AFrankiai/google-pa%C5%A1tas?authuser=0
+• Kaip mokiniui jungtis prie el. dienyno mokyklos el. paštu - https://antakalnio.lt/lt/naujienos/svarbu/2023/09/kaip-prisijungti-prie-elektroninio-dienyno-2023-09-09-09-47
+
+Pagarbiai,
+Antakalnio progimnazijos IT administratorius`;
+
+  const bodyHtml = `
+<p>Sveiki,</p>
+<p><strong>Informuojame, kad yra sukurti el. paštai.</strong><br/>
+Slaptažodžius būtina pasikeisti ir kur nors vaikams bei jų tėvams užsirašyti.<br/>
+Atnaujinta klasės el. pašto grupė.</p>
+
+${extraNotes ? `<p><em>Papildoma informacija: ${extraNotes}</em></p>` : ""}
+
+<p><strong>Naujai sukurtų vartotojų sąrašas (${count}):</strong></p>
+<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; font-family: sans-serif; font-size: 13px; width: 100%; max-width: 700px;">
+  <thead>
+    <tr style="background-color: #f3f4f6; text-align: left;">
+      <th>#</th>
+      <th>Vardas Pavardė</th>
+      <th>El. paštas</th>
+      <th>Laikinas slaptažodis</th>
+      <th>Padalinys</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${users
+      .map(
+        (u, i) => `
+    <tr style="background-color: ${i % 2 === 0 ? "#ffffff" : "#f9fafb"};">
+      <td>${i + 1}</td>
+      <td><strong>${u.firstName} ${u.lastName}</strong></td>
+      <td style="color: #4f46e5;">${u.email}</td>
+      <td style="font-family: monospace;">${password}</td>
+      <td>${u.orgUnit}</td>
+    </tr>`
+      )
+      .join("")}
+  </tbody>
+</table>
+
+<p style="margin-top: 20px;"><strong>Svarbios nuorodos ir instrukcijos:</strong></p>
+<ul>
+  <li><a href="https://sites.google.com/antakalnio.lt/nuotolinis/pagalba#h.wqc5u5hdrupj">Nuotolinio ugdymo svetainė</a></li>
+  <li><a href="https://sites.google.com/antakalnio.lt/nuotolinis/ugdymo-it-%C4%AFrankiai/google-pa%C5%A1tas?authuser=0">El. pašto prisijungimo instrukcija</a></li>
+  <li><a href="https://antakalnio.lt/lt/naujienos/svarbu/2023/09/kaip-prisijungti-prie-elektroninio-dienyno-2023-09-09-09-47">Kaip mokiniui jungtis prie el. dienyno mokyklos el. paštu</a></li>
+</ul>
+
+<p>Pagarbiai,<br/>Antakalnio progimnazijos IT administratorius</p>
+`;
+
+  return { subject, bodyText, bodyHtml };
 }
